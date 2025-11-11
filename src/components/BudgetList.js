@@ -5,7 +5,7 @@ const BudgetList = ({ budgets, onDeleteBudget }) => {
     <ul>
       {budgets.map((budget) => (
         <li key={budget._id}>
-          {budget.description} - ₹{budget.amount} 
+          {budget.description} - Rs{budget.amount} 
           <button onClick={() => onDeleteBudget(budget._id)}>Delete</button>
         </li>
       ))}
