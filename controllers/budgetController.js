@@ -3,7 +3,7 @@ const Budget = require('../models/budgetModel');
 // Get all budget entries
 const getBudgets = async (req, res) => {
   try {
-    const budgets = await Budget.find();
+    const budgets = await Budget.find({ user: req.user._id }).sort({ date: -1 });
     res.status(200).json(budgets);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -12,20 +12,27 @@ const getBudgets = async (req, res) => {
 
 // Add a budget entry
 const addBudget = async (req, res) => {
-  const { description, amount } = req.body;
-  console.log(req.body);  // Debug to check what data is coming from the frontend
+  const description = req.body.description ? req.body.description.trim() : '';
+  const parsedAmount = Number(req.body.amount);
+  const category = req.body.category || 'other';
+  const date = req.body.date;
+
+  if (!description || !Number.isFinite(parsedAmount)) {
+    return res.status(400).json({ message: 'Description and a valid amount are required.' });
+  }
 
   const newBudget = new Budget({
+    user: req.user._id,
     description,
-    amount,
+    amount: parsedAmount,
+    category,
+    date,
   });
 
   try {
     const savedBudget = await newBudget.save();
-    console.log('Saved budget:', savedBudget);  // Debugging
     res.status(201).json(savedBudget);
   } catch (error) {
-    console.error('Error saving budget:', error);  // Debugging
     res.status(500).json({ message: error.message });
   }
 };
@@ -35,7 +42,12 @@ const addBudget = async (req, res) => {
 const deleteBudget = async (req, res) => {
   const { id } = req.params;
   try {
-    await Budget.findByIdAndDelete(id);
+    const deletedBudget = await Budget.findOneAndDelete({ _id: id, user: req.user._id });
+
+    if (!deletedBudget) {
+      return res.status(404).json({ message: 'Budget entry not found.' });
+    }
+
     res.status(200).json({ message: 'Budget entry deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
