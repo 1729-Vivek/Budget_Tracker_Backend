@@ -8,6 +8,7 @@ const budgetSchema = new mongoose.Schema({
   },
   description: { type: String, required: true },
   amount: { type: Number, required: true },
+  category: { type: String, default: 'other' },
   date: { type: Date, default: Date.now },
 });
 

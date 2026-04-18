@@ -12,16 +12,21 @@ const getBudgets = async (req, res) => {
 
 // Add a budget entry
 const addBudget = async (req, res) => {
-  const { description, amount } = req.body;
+  const description = req.body.description ? req.body.description.trim() : '';
+  const parsedAmount = Number(req.body.amount);
+  const category = req.body.category || 'other';
+  const date = req.body.date;
 
-  if (!description || typeof amount !== 'number' || Number.isNaN(amount)) {
+  if (!description || !Number.isFinite(parsedAmount)) {
     return res.status(400).json({ message: 'Description and a valid amount are required.' });
   }
 
   const newBudget = new Budget({
     user: req.user._id,
     description,
-    amount,
+    amount: parsedAmount,
+    category,
+    date,
   });
 
   try {
