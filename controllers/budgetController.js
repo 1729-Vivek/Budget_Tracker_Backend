@@ -37,6 +37,42 @@ const addBudget = async (req, res) => {
   }
 };
 
+const updateBudget = async (req, res) => {
+  const { id } = req.params;
+  const description = req.body.description ? req.body.description.trim() : '';
+  const parsedAmount = Number(req.body.amount);
+  const category = req.body.category || 'other';
+  const date = req.body.date;
+
+  if (!description || !Number.isFinite(parsedAmount)) {
+    return res.status(400).json({ message: 'Description and a valid amount are required.' });
+  }
+
+  try {
+    const updatedBudget = await Budget.findOneAndUpdate(
+      { _id: id, user: req.user._id },
+      {
+        description,
+        amount: parsedAmount,
+        category,
+        date,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedBudget) {
+      return res.status(404).json({ message: 'Budget entry not found.' });
+    }
+
+    return res.status(200).json(updatedBudget);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 
 // Delete a budget entry
 const deleteBudget = async (req, res) => {
@@ -54,4 +90,4 @@ const deleteBudget = async (req, res) => {
   }
 };
 
-module.exports = { getBudgets, addBudget, deleteBudget };
+module.exports = { getBudgets, addBudget, updateBudget, deleteBudget };
