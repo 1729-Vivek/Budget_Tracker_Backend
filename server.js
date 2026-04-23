@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const budgetRoutes = require('./routes/budgetRoutes');
 const authRoutes = require('./routes/authRoutes');
+const User = require('./models/userModel');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +34,18 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/budget', budgetRoutes);
 
+const removeLegacyUserIndexes = async () => {
+  const indexes = await User.collection.indexes();
+  const legacyUsernameIndex = indexes.find((index) => index.name === 'username_1');
+
+  if (!legacyUsernameIndex) {
+    return;
+  }
+
+  await User.collection.dropIndex('username_1');
+  console.log('Dropped legacy users.username_1 index.');
+};
+
 // Connect to MongoDB
 if (!MONGO_URI) {
   console.error('Missing MONGO_URI. Add it to your .env file before starting the server.');
@@ -40,7 +53,8 @@ if (!MONGO_URI) {
 }
 
 mongoose.connect(MONGO_URI)
-  .then(() => {
+  .then(async () => {
+    await removeLegacyUserIndexes();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     console.log('Connected to MongoDB');
   })
